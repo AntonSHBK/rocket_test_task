@@ -1,0 +1,39 @@
+<header class="site-header">
+    <div class="container site-header__inner">
+        <a class="brand" href="{{ url_for('inventory_page') }}" aria-label="CheckStock — главная">
+            <span class="brand__mark" aria-hidden="true">CS</span>
+            <span class="brand__text">CheckStock</span>
+        </a>
+
+        <button
+            class="navigation-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="main-navigation"
+            data-navigation-toggle
+        >
+            <span class="visually-hidden">Открыть навигацию</span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </button>
+
+        <nav class="site-navigation" id="main-navigation" aria-label="Основная навигация">
+            <a
+                class="site-navigation__link{% if active_page == 'inventory' %} is-active{% endif %}"
+                href="{{ url_for('inventory_page') }}"
+                {% if active_page == 'inventory' %}aria-current="page"{% endif %}
+            >Остатки</a>
+            <a
+                class="site-navigation__link{% if active_page == 'warehouses' %} is-active{% endif %}"
+                href="{{ url_for('warehouses_page') }}"
+                {% if active_page == 'warehouses' %}aria-current="page"{% endif %}
+            >Склады</a>
+            <a
+                class="site-navigation__link{% if active_page == 'operations' %} is-active{% endif %}"
+                href="{{ url_for('operations_page') }}"
+                {% if active_page == 'operations' %}aria-current="page"{% endif %}
+            >Операции</a>
+        </nav>
+    </div>
+</header>

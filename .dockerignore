@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Git and IDE
+.git/
+.idea/
+.vscode/
+
+# Local configuration and runtime data
+docker/.env
+logs/
+data/
+other/

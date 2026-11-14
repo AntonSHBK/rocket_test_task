@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Остатки{% endblock %}
+
+{% block page_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/inventory.css') }}">
+{% endblock %}
+
+{% block content %}
+    <section class="page-content inventory-page" data-page="inventory">
+        <div class="page-header inventory-page__header">
+            <div>
+                <p class="page-eyebrow">Складской учёт</p>
+                <h1>Остатки</h1>
+                <p class="page-description">
+                    Физические, зарезервированные и доступные остатки товаров.
+                </p>
+            </div>
+            <button class="button button--secondary" type="button" data-refresh-inventory>
+                Обновить данные
+            </button>
+        </div>
+
+        <div class="inventory-summary" aria-label="Общие показатели остатков">
+            <article class="card summary-card">
+                <span class="summary-card__label">Физически</span>
+                <strong class="summary-card__value" data-summary-physical>—</strong>
+                <span class="summary-card__hint">На всех складах</span>
+            </article>
+            <article class="card summary-card">
+                <span class="summary-card__label">В резерве</span>
+                <strong class="summary-card__value" data-summary-reserved>—</strong>
+                <span class="summary-card__hint">Резервы FBS</span>
+            </article>
+            <article class="card summary-card">
+                <span class="summary-card__label">Доступно</span>
+                <strong class="summary-card__value" data-summary-available>—</strong>
+                <span class="summary-card__hint">Для новых операций</span>
+            </article>
+            <article class="card summary-card summary-card--accent">
+                <span class="summary-card__label">Всего в пути</span>
+                <strong class="summary-card__value" data-summary-transit>—</strong>
+                <span class="summary-card__hint">Не входит в остатки складов</span>
+            </article>
+        </div>
+
+        <section class="transit-section" aria-labelledby="transit-title">
+            <div class="section-heading">
+                <div>
+                    <h2 id="transit-title">Товары в пути</h2>
+                    <p>Товары, которые уже покинули склад отправления.</p>
+                </div>
+            </div>
+            <div class="transit-grid">
+                <article class="transit-card">
+                    <span class="transit-card__label">Между складами</span>
+                    <strong data-transit-warehouses>—</strong>
+                </article>
+                <article class="transit-card">
+                    <span class="transit-card__label">На маркетплейс FBO</span>
+                    <strong data-transit-fbo>—</strong>
+                </article>
+                <article class="transit-card">
+                    <span class="transit-card__label">К клиенту FBS</span>
+                    <strong data-transit-fbs>—</strong>
+                </article>
+            </div>
+        </section>
+
+        <div class="inventory-layout">
+            <section class="card receipt-card" aria-labelledby="receipt-title">
+                <div class="card__header">
+                    <h2 id="receipt-title">Оформить приход</h2>
+                    <p>Увеличивает физический остаток выбранного склада.</p>
+                </div>
+                <form class="card__body receipt-form" data-receipt-form>
+                    <div class="form-field">
+                        <label for="receipt-product">Товар</label>
+                        <select class="form-control" id="receipt-product" required>
+                            <option value="">Выберите товар</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="receipt-warehouse">Склад</label>
+                        <select class="form-control" id="receipt-warehouse" required>
+                            <option value="">Выберите склад</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="receipt-quantity">Количество</label>
+                        <input
+                            class="form-control"
+                            id="receipt-quantity"
+                            type="number"
+                            min="1"
+                            step="1"
+                            inputmode="numeric"
+                            placeholder="Например, 10"
+                            required
+                        >
+                    </div>
+                    <button class="button receipt-form__submit" type="submit">
+                        Оформить приход
+                    </button>
+                </form>
+            </section>
+
+            <section class="card write-off-card" aria-labelledby="write-off-title">
+                <div class="card__header">
+                    <h2 id="write-off-title">Оформить списание</h2>
+                    <p>Списать можно только доступный остаток: физический остаток за вычетом резерва.</p>
+                </div>
+                <form class="card__body write-off-form" data-write-off-form>
+                    <div class="form-field">
+                        <label for="write-off-product">Товар</label>
+                        <select class="form-control" id="write-off-product" required>
+                            <option value="">Выберите товар</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="write-off-warehouse">Склад</label>
+                        <select class="form-control" id="write-off-warehouse" required>
+                            <option value="">Выберите склад</option>
+                        </select>
+                    </div>
+                    <div class="write-off-stock-preview" data-write-off-stock-preview hidden>
+                        <span>Доступно: <strong data-write-off-stock-available>0</strong></span>
+                        <span>В резерве: <strong data-write-off-stock-reserved>0</strong></span>
+                    </div>
+                    <div class="form-field">
+                        <label for="write-off-quantity">Количество</label>
+                        <input
+                            class="form-control"
+                            id="write-off-quantity"
+                            type="number"
+                            min="1"
+                            step="1"
+                            inputmode="numeric"
+                            placeholder="Например, 5"
+                            required
+                        >
+                    </div>
+                    <div class="form-field write-off-form__reason">
+                        <label for="write-off-reason">Причина списания</label>
+                        <input
+                            class="form-control"
+                            id="write-off-reason"
+                            type="text"
+                            maxlength="500"
+                            placeholder="Например, повреждение упаковки"
+                            required
+                        >
+                    </div>
+                    <button class="button button--danger write-off-form__submit" type="submit">
+                        Оформить списание
+                    </button>
+                </form>
+            </section>
+
+            <section class="card inventory-table-card" aria-labelledby="inventory-title">
+                <div class="card__header section-heading">
+                    <div>
+                        <h2 id="inventory-title">Остатки по артикулам</h2>
+                        <p>Распределение каждого товара по складам.</p>
+                    </div>
+                    <div class="inventory-table-tools">
+                        <div class="warehouse-filter" data-warehouse-filter>
+                            <button
+                                class="button button--secondary button--small warehouse-filter__toggle"
+                                type="button"
+                                aria-expanded="false"
+                                aria-controls="warehouse-filter-menu"
+                                data-warehouse-filter-toggle
+                            >
+                                <span data-warehouse-filter-label>Склады: все</span>
+                                <span aria-hidden="true">▾</span>
+                            </button>
+                            <div
+                                class="warehouse-filter__menu"
+                                id="warehouse-filter-menu"
+                                data-warehouse-filter-menu
+                                hidden
+                            >
+                                <label class="warehouse-filter__option warehouse-filter__option--preset">
+                                    <input type="checkbox" data-warehouse-filter-all>
+                                    <span>Все склады</span>
+                                </label>
+                                <label class="warehouse-filter__option warehouse-filter__option--preset">
+                                    <input type="checkbox" data-warehouse-filter-active>
+                                    <span>Только актуальные</span>
+                                </label>
+                                <div class="warehouse-filter__divider"></div>
+                                <div class="warehouse-filter__list" data-warehouse-filter-list></div>
+                            </div>
+                        </div>
+                        <span class="updated-at" data-updated-at></span>
+                    </div>
+                </div>
+                <div
+                    class="inventory-table-region"
+                    aria-live="polite"
+                    aria-busy="true"
+                    data-inventory-table
+                >
+                    <div class="loading-state">Загрузка остатков...</div>
+                </div>
+            </section>
+        </div>
+    </section>
+{% endblock %}
+
+{% block page_scripts %}
+    <script src="{{ url_for('static', path='/js/inventory.js') }}" defer></script>
+{% endblock %}

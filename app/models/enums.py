@@ -1,0 +1,36 @@
+from enum import StrEnum
+
+
+class ReservationStatus(StrEnum):
+    RESERVED = "RESERVED"
+    CANCELLED = "CANCELLED"
+    SHIPPED = "SHIPPED"
+
+
+class TransferStatus(StrEnum):
+    CREATED = "CREATED"
+    IN_TRANSIT = "IN_TRANSIT"
+    RECEIVED = "RECEIVED"
+
+
+class ShipmentType(StrEnum):
+    FBS = "FBS"
+    FBO = "FBO"
+
+
+class ShipmentStatus(StrEnum):
+    CREATED = "CREATED"
+    IN_TRANSIT = "IN_TRANSIT"
+    RECEIVED = "RECEIVED"
+
+
+class StockEventType(StrEnum):
+    RECEIPT = "RECEIPT"
+    WRITE_OFF = "WRITE_OFF"
+    FBS_RESERVED = "FBS_RESERVED"
+    FBS_RESERVATION_CANCELLED = "FBS_RESERVATION_CANCELLED"
+    FBS_SHIPPED = "FBS_SHIPPED"
+    TRANSFER_SHIPPED = "TRANSFER_SHIPPED"
+    TRANSFER_RECEIVED = "TRANSFER_RECEIVED"
+    FBO_SHIPPED = "FBO_SHIPPED"
+    FBO_RECEIVED = "FBO_RECEIVED"

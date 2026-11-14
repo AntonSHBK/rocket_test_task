@@ -1,0 +1,234 @@
+.operations-page {
+    display: grid;
+    gap: 32px;
+}
+
+.operations-page__header,
+.section-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.operation-create-grid,
+.operation-lists-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.operation-form-card,
+.operation-list-card,
+.history-card {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.operation-form-card h2,
+.operation-list-card h2,
+.history-card h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.operation-form-card .card__header > p:last-child,
+.history-heading p {
+    margin: 5px 0 0;
+    color: var(--color-muted);
+    font-size: 13px;
+}
+
+.operation-label {
+    margin: 0 0 4px;
+    color: var(--color-primary);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.operation-form {
+    display: grid;
+    gap: 14px;
+}
+
+.operation-form__row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.operation-form > .button {
+    justify-self: start;
+}
+
+.stock-preview {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-medium);
+    background: var(--color-primary-soft);
+}
+
+.stock-preview[hidden] {
+    display: none;
+}
+
+.stock-preview__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.stock-preview__item span {
+    color: var(--color-muted);
+    font-size: 12px;
+}
+
+.stock-preview__item strong {
+    font-size: 18px;
+}
+
+.operation-group {
+    padding: 18px 20px;
+}
+
+.operation-group + .operation-group {
+    border-top: 1px solid var(--color-border);
+}
+
+.operation-group--completed {
+    background: var(--color-surface-muted);
+}
+
+.operation-group h3 {
+    margin: 0 0 12px;
+    font-size: 14px;
+}
+
+.operation-list {
+    display: grid;
+    gap: 10px;
+}
+
+.operation-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px;
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-medium);
+    background: var(--color-surface);
+}
+
+.operation-item__main,
+.operation-item__details {
+    display: grid;
+    gap: 5px;
+}
+
+.operation-item__title {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.operation-item__title strong {
+    font-size: 14px;
+}
+
+.operation-item__details {
+    color: var(--color-muted);
+    font-size: 12px;
+}
+
+.operation-item__actions {
+    align-self: center;
+    justify-content: flex-end;
+}
+
+.operation-empty {
+    padding: 14px 0;
+    color: var(--color-muted);
+    font-size: 13px;
+}
+
+.history-filter {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) minmax(240px, 1fr) auto;
+    align-items: end;
+    gap: 12px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.history-filter__actions {
+    flex-wrap: nowrap;
+}
+
+.history-table {
+    min-width: 920px;
+}
+
+.history-event {
+    min-width: 170px;
+}
+
+.history-product strong,
+.history-product span {
+    display: block;
+}
+
+.history-product span,
+.updated-at {
+    color: var(--color-muted);
+    font-size: 12px;
+}
+
+.history-route {
+    min-width: 180px;
+}
+
+.operation-error {
+    color: var(--color-danger);
+}
+
+@media (max-width: 960px) {
+    .operation-create-grid,
+    .operation-lists-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .history-filter {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .operations-page__header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .operations-page__header .button,
+    .operation-form > .button {
+        align-self: flex-start;
+    }
+
+    .operation-form__row,
+    .history-filter {
+        grid-template-columns: 1fr;
+    }
+
+    .operation-item {
+        grid-template-columns: 1fr;
+    }
+
+    .operation-item__actions {
+        justify-content: flex-start;
+    }
+}

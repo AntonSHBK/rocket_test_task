@@ -1,0 +1,46 @@
+
+name: checkstock
+
+services:
+  # =============================================================================
+  # Backend
+  # =============================================================================
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    env_file:
+      - .env
+    command:
+      - /bin/sh
+      - -c
+      - python -m alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../:/app
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # =============================================================================
+  # Database
+  # =============================================================================
+  database:
+    image: postgres:16-alpine
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

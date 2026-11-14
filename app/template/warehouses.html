@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Склады и перемещения{% endblock %}
+
+{% block page_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/warehouses.css') }}">
+{% endblock %}
+
+{% block content %}
+    <section class="page-content warehouses-page" data-page="warehouses">
+        <div class="page-header warehouses-page__header">
+            <div>
+                <p class="page-eyebrow">Логистика</p>
+                <h1>Склады и перемещения</h1>
+                <p class="page-description">
+                    Управление складами и движением товаров между ними.
+                </p>
+            </div>
+            <button class="button button--secondary" type="button" data-refresh-warehouses>
+                Обновить данные
+            </button>
+        </div>
+
+        <section class="warehouse-section" aria-labelledby="warehouses-title">
+            <div class="section-heading">
+                <div>
+                    <h2 id="warehouses-title">Склады</h2>
+                    <p>Активные склады доступны для операций, архивные сохраняют остатки и историю.</p>
+                </div>
+            </div>
+
+            <form class="card warehouse-create-form" data-warehouse-create-form>
+                <div class="form-field">
+                    <label for="warehouse-name">Название нового склада</label>
+                    <input
+                        class="form-control"
+                        id="warehouse-name"
+                        name="name"
+                        type="text"
+                        maxlength="255"
+                        placeholder="Например, Основной склад"
+                        required
+                    >
+                </div>
+                <button class="button" type="submit">Создать склад</button>
+            </form>
+
+            <div class="card warehouse-list-card">
+                <div
+                    class="warehouse-list-region"
+                    aria-live="polite"
+                    aria-busy="true"
+                    data-warehouse-list
+                >
+                    <div class="loading-state">Загрузка складов...</div>
+                </div>
+                <div class="warehouse-archive-controls" data-warehouse-archive-controls hidden>
+                    <button
+                        class="button button--secondary button--small"
+                        type="button"
+                        aria-expanded="false"
+                        data-toggle-warehouse-archive
+                    >
+                        Показать архив
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="transfer-section" aria-labelledby="transfer-create-title">
+            <div class="section-heading">
+                <div>
+                    <h2 id="transfer-create-title">Новое перемещение</h2>
+                    <p>Создайте перемещение, затем отправьте товар и подтвердите его приёмку.</p>
+                </div>
+            </div>
+
+            <form class="card transfer-form" data-transfer-form>
+                <div class="form-field">
+                    <label for="transfer-product">Товар</label>
+                    <select class="form-control" id="transfer-product" required>
+                        <option value="">Выберите товар</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="transfer-source">Склад отправления</label>
+                    <select class="form-control" id="transfer-source" required>
+                        <option value="">Выберите склад</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="transfer-destination">Склад назначения</label>
+                    <select class="form-control" id="transfer-destination" required>
+                        <option value="">Выберите склад</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="transfer-quantity">Количество</label>
+                    <input
+                        class="form-control"
+                        id="transfer-quantity"
+                        type="number"
+                        min="1"
+                        step="1"
+                        inputmode="numeric"
+                        placeholder="Например, 10"
+                        required
+                    >
+                </div>
+                <button class="button transfer-form__submit" type="submit">
+                    Создать перемещение
+                </button>
+            </form>
+        </section>
+
+        <section class="card transfer-list-card" aria-labelledby="transfers-title">
+            <div class="card__header section-heading">
+                <div>
+                    <h2 id="transfers-title">Перемещения</h2>
+                    <p>Текущий статус и доступные действия по каждому перемещению.</p>
+                </div>
+                <span class="updated-at" data-warehouses-updated-at></span>
+            </div>
+            <div
+                class="transfer-list-region"
+                aria-live="polite"
+                aria-busy="true"
+                data-transfer-list
+            >
+                <div class="loading-state">Загрузка перемещений...</div>
+            </div>
+        </section>
+    </section>
+{% endblock %}
+
+{% block page_scripts %}
+    <script src="{{ url_for('static', path='/js/warehouses.js') }}" defer></script>
+{% endblock %}

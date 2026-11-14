@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Операции{% endblock %}
+
+{% block page_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/operations.css') }}">
+{% endblock %}
+
+{% block content %}
+    <section class="page-content operations-page" data-page="operations">
+        <div class="page-header operations-page__header">
+            <div>
+                <p class="page-eyebrow">FBS и FBO</p>
+                <h1>Операции</h1>
+                <p class="page-description">
+                    Резервы, отправки, приёмка и история складских операций.
+                </p>
+            </div>
+            <button class="button button--secondary" type="button" data-refresh-operations>
+                Обновить данные
+            </button>
+        </div>
+
+        <div class="operation-create-grid">
+            <section class="card operation-form-card" aria-labelledby="fbs-create-title">
+                <div class="card__header">
+                    <p class="operation-label">FBS</p>
+                    <h2 id="fbs-create-title">Создать резерв</h2>
+                    <p>Резервирует товар на складе для последующей отправки клиенту.</p>
+                </div>
+                <form class="card__body operation-form" data-fbs-form>
+                    <div class="form-field">
+                        <label for="fbs-product">Товар</label>
+                        <select class="form-control" id="fbs-product" required>
+                            <option value="">Выберите товар</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="fbs-warehouse">Склад</label>
+                        <select class="form-control" id="fbs-warehouse" required>
+                            <option value="">Выберите склад</option>
+                        </select>
+                    </div>
+                    <div
+                        class="stock-preview"
+                        data-fbs-stock-preview
+                        aria-live="polite"
+                        hidden
+                    >
+                        <div class="stock-preview__item">
+                            <span>Доступно</span>
+                            <strong data-fbs-stock-available>—</strong>
+                        </div>
+                        <div class="stock-preview__item">
+                            <span>В резерве</span>
+                            <strong data-fbs-stock-reserved>—</strong>
+                        </div>
+                    </div>
+                    <div class="operation-form__row">
+                        <div class="form-field">
+                            <label for="fbs-quantity">Количество</label>
+                            <input
+                                class="form-control"
+                                id="fbs-quantity"
+                                type="number"
+                                min="1"
+                                step="1"
+                                inputmode="numeric"
+                                required
+                            >
+                        </div>
+                        <div class="form-field">
+                            <label for="fbs-order-reference">Номер заказа</label>
+                            <input
+                                class="form-control"
+                                id="fbs-order-reference"
+                                type="text"
+                                maxlength="128"
+                                placeholder="Необязательно"
+                            >
+                        </div>
+                    </div>
+                    <button class="button" type="submit">Создать резерв FBS</button>
+                </form>
+            </section>
+
+            <section class="card operation-form-card" aria-labelledby="fbo-create-title">
+                <div class="card__header">
+                    <p class="operation-label">FBO</p>
+                    <h2 id="fbo-create-title">Создать поставку</h2>
+                    <p>Подготавливает товар к отправке со склада на маркетплейс.</p>
+                </div>
+                <form class="card__body operation-form" data-fbo-form>
+                    <div class="form-field">
+                        <label for="fbo-product">Товар</label>
+                        <select class="form-control" id="fbo-product" required>
+                            <option value="">Выберите товар</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="fbo-warehouse">Склад отправления</label>
+                        <select class="form-control" id="fbo-warehouse" required>
+                            <option value="">Выберите склад</option>
+                        </select>
+                    </div>
+                    <div
+                        class="stock-preview"
+                        data-fbo-stock-preview
+                        aria-live="polite"
+                        hidden
+                    >
+                        <div class="stock-preview__item">
+                            <span>Доступно</span>
+                            <strong data-fbo-stock-available>—</strong>
+                        </div>
+                        <div class="stock-preview__item">
+                            <span>В резерве</span>
+                            <strong data-fbo-stock-reserved>—</strong>
+                        </div>
+                    </div>
+                    <div class="operation-form__row">
+                        <div class="form-field">
+                            <label for="fbo-destination">Маркетплейс</label>
+                            <input
+                                class="form-control"
+                                id="fbo-destination"
+                                type="text"
+                                maxlength="255"
+                                placeholder="Например, Ozon Москва"
+                                required
+                            >
+                        </div>
+                        <div class="form-field">
+                            <label for="fbo-quantity">Количество</label>
+                            <input
+                                class="form-control"
+                                id="fbo-quantity"
+                                type="number"
+                                min="1"
+                                step="1"
+                                inputmode="numeric"
+                                required
+                            >
+                        </div>
+                    </div>
+                    <button class="button" type="submit">Создать поставку FBO</button>
+                </form>
+            </section>
+        </div>
+
+        <div class="operation-lists-grid">
+            <section class="card operation-list-card" aria-labelledby="fbs-list-title">
+                <div class="card__header section-heading">
+                    <div>
+                        <p class="operation-label">FBS</p>
+                        <h2 id="fbs-list-title">Резервы</h2>
+                    </div>
+                </div>
+                <div class="operation-group">
+                    <h3>Активные</h3>
+                    <div class="operation-list" data-fbs-active aria-live="polite">
+                        <div class="loading-state">Загрузка резервов...</div>
+                    </div>
+                </div>
+                <div class="operation-group operation-group--completed">
+                    <h3>Завершённые</h3>
+                    <div class="operation-list" data-fbs-completed aria-live="polite"></div>
+                </div>
+            </section>
+
+            <section class="card operation-list-card" aria-labelledby="fbo-list-title">
+                <div class="card__header section-heading">
+                    <div>
+                        <p class="operation-label">FBO</p>
+                        <h2 id="fbo-list-title">Поставки</h2>
+                    </div>
+                </div>
+                <div class="operation-group">
+                    <h3>Активные</h3>
+                    <div class="operation-list" data-fbo-active aria-live="polite">
+                        <div class="loading-state">Загрузка поставок...</div>
+                    </div>
+                </div>
+                <div class="operation-group operation-group--completed">
+                    <h3>Завершённые</h3>
+                    <div class="operation-list" data-fbo-completed aria-live="polite"></div>
+                </div>
+            </section>
+        </div>
+
+        <section class="card history-card" aria-labelledby="history-title">
+            <div class="card__header section-heading history-heading">
+                <div>
+                    <h2 id="history-title">История складских операций</h2>
+                    <p>Последние 100 событий с фильтрацией по артикулу и типу операции.</p>
+                </div>
+                <span class="updated-at" data-operations-updated-at></span>
+            </div>
+            <form class="history-filter" data-history-filter>
+                <div class="form-field">
+                    <label for="history-sku">Артикул</label>
+                    <input
+                        class="form-control"
+                        id="history-sku"
+                        type="text"
+                        maxlength="64"
+                        placeholder="Например, SKU-001"
+                    >
+                </div>
+                <div class="form-field">
+                    <label for="history-event-type">Тип операции</label>
+                    <select class="form-control" id="history-event-type">
+                        <option value="">Все операции</option>
+                        <option value="RECEIPT">Приход</option>
+                        <option value="WRITE_OFF">Списание</option>
+                        <option value="FBS_RESERVED">Резерв FBS</option>
+                        <option value="FBS_RESERVATION_CANCELLED">Отмена резерва FBS</option>
+                        <option value="FBS_SHIPPED">Отправка FBS</option>
+                        <option value="TRANSFER_SHIPPED">Отправка перемещения</option>
+                        <option value="TRANSFER_RECEIVED">Приёмка перемещения</option>
+                        <option value="FBO_SHIPPED">Отправка FBO</option>
+                        <option value="FBO_RECEIVED">Приёмка FBO</option>
+                    </select>
+                </div>
+                <div class="actions history-filter__actions">
+                    <button class="button" type="submit">Применить</button>
+                    <button class="button button--secondary" type="button" data-reset-history>
+                        Сбросить
+                    </button>
+                </div>
+            </form>
+            <div
+                class="history-region"
+                aria-live="polite"
+                aria-busy="true"
+                data-history-list
+            >
+                <div class="loading-state">Загрузка истории...</div>
+            </div>
+        </section>
+    </section>
+{% endblock %}
+
+{% block page_scripts %}
+    <script src="{{ url_for('static', path='/js/operations.js') }}" defer></script>
+{% endblock %}
