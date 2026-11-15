@@ -34,10 +34,10 @@ docker compose -f docker/docker-compose.yml up --build -d
 
 После запуска доступны:
 
-- Основная страница: `http://127.0.0.1:8000/`
-- API: `http://127.0.0.1:8000/api`
-- Swagger UI: `http://127.0.0.1:8000/docs`
-- OpenAPI: `http://127.0.0.1:8000/openapi.json`
+- Основная страница: [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+- API: [http://127.0.0.1:8000/api](http://127.0.0.1:8000/api)
+- Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- OpenAPI: [http://127.0.0.1:8000/openapi.json](http://127.0.0.1:8000/openapi.json)
 
 ## Добавление тестовых данных
 
