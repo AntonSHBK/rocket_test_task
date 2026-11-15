@@ -47,6 +47,7 @@ if (operationsPage) {
         FBS_RESERVED: "Резерв FBS",
         FBS_RESERVATION_CANCELLED: "Отмена резерва FBS",
         FBS_SHIPPED: "Отправка FBS",
+        FBS_DELIVERED: "Доставка FBS",
         TRANSFER_SHIPPED: "Отправка перемещения",
         TRANSFER_RECEIVED: "Приёмка перемещения",
         FBO_SHIPPED: "Отправка FBO",
@@ -178,6 +179,7 @@ if (operationsPage) {
             RESERVED: ["В резерве", "status-badge--warning"],
             CANCELLED: ["Отменён", "status-badge--danger"],
             SHIPPED: ["Отправлен", "status-badge--success"],
+            DELIVERED: ["Доставлен", "status-badge--success"],
         };
         return statuses[status] || [status, ""];
     }
@@ -243,6 +245,10 @@ if (operationsPage) {
                 createActionButton("Отправить", "fbs", "ship", reservation.id),
                 createActionButton("Отменить", "fbs", "cancel", reservation.id, "button--danger"),
             );
+        } else if (reservation.status === "SHIPPED") {
+            actions.push(
+                createActionButton("Подтвердить доставку", "fbs", "deliver", reservation.id),
+            );
         }
         return createOperationItem({
             identifier: reservation.id,
@@ -280,14 +286,14 @@ if (operationsPage) {
     function renderFbsReservations(reservations) {
         renderOperationRegion(
             fbsActive,
-            reservations.filter((reservation) => reservation.status === "RESERVED"),
-            "Активных резервов нет",
+            reservations.filter((reservation) => ["RESERVED", "SHIPPED"].includes(reservation.status)),
+            "Активных операций FBS нет",
             createFbsItem,
         );
         renderOperationRegion(
             fbsCompleted,
-            reservations.filter((reservation) => reservation.status !== "RESERVED"),
-            "Завершённых резервов нет",
+            reservations.filter((reservation) => ["CANCELLED", "DELIVERED"].includes(reservation.status)),
+            "Завершённых операций FBS нет",
             createFbsItem,
         );
     }
@@ -429,12 +435,23 @@ if (operationsPage) {
             return;
         }
 
+        const productLabel = fbsProduct.selectedOptions[0]?.textContent || fbsProduct.value;
+        const warehouseLabel = fbsWarehouse.selectedOptions[0]?.textContent || fbsWarehouse.value;
+        const quantity = Number(fbsQuantity.value);
+        const orderReference = fbsOrderReference.value.trim() || "Не указан";
+        const confirmed = window.confirm(
+            `Создать резерв FBS?\n\nТовар: ${productLabel}\nСклад: ${warehouseLabel}\nКоличество: ${formatQuantity(quantity)} шт.\nЗаказ: ${orderReference}`,
+        );
+        if (!confirmed) {
+            return;
+        }
+
         ui.setButtonLoading(fbsSubmitButton, true, "Создание...");
         try {
             const reservation = await api.post("/api/fbs/reservations", {
                 sku: fbsProduct.value,
                 warehouse_id: Number(fbsWarehouse.value),
-                quantity: Number(fbsQuantity.value),
+                quantity,
                 order_reference: fbsOrderReference.value.trim() || null,
                 idempotency_key: fbsKey,
             });
@@ -456,13 +473,24 @@ if (operationsPage) {
             return;
         }
 
+        const productLabel = fboProduct.selectedOptions[0]?.textContent || fboProduct.value;
+        const warehouseLabel = fboWarehouse.selectedOptions[0]?.textContent || fboWarehouse.value;
+        const destination = fboDestination.value.trim();
+        const quantity = Number(fboQuantity.value);
+        const confirmed = window.confirm(
+            `Создать поставку FBO?\n\nТовар: ${productLabel}\nСклад: ${warehouseLabel}\nКоличество: ${formatQuantity(quantity)} шт.\nМаркетплейс: ${destination}`,
+        );
+        if (!confirmed) {
+            return;
+        }
+
         ui.setButtonLoading(fboSubmitButton, true, "Создание...");
         try {
             const shipment = await api.post("/api/fbo/shipments", {
                 sku: fboProduct.value,
                 source_warehouse_id: Number(fboWarehouse.value),
-                destination: fboDestination.value,
-                quantity: Number(fboQuantity.value),
+                destination,
+                quantity,
                 idempotency_key: fboKey,
             });
             fboKey = createIdempotencyKey("fbo");
@@ -486,20 +514,27 @@ if (operationsPage) {
         const operation = button.dataset.operation;
         const action = button.dataset.operationAction;
         const identifier = Number(button.dataset.id);
-        if (operation === "fbs" && action === "cancel") {
-            const confirmed = window.confirm("Отменить резерв FBS? Зарезервированный товар станет доступен.");
-            if (!confirmed) {
-                return;
-            }
+        const confirmationMessages = {
+            "fbs:ship": `Отправить резерв FBS #${identifier}? Товар будет списан со склада и перейдёт в путь к клиенту.`,
+            "fbs:cancel": `Отменить резерв FBS #${identifier}? Зарезервированный товар станет доступен.`,
+            "fbs:deliver": `Подтвердить доставку заказа FBS #${identifier} клиенту?`,
+            "fbo:ship": `Отправить поставку FBO #${identifier}? Товар будет списан со склада и перейдёт в путь.`,
+            "fbo:receive": `Подтвердить приёмку поставки FBO #${identifier} маркетплейсом?`,
+        };
+        const operationKey = `${operation}:${action}`;
+        const confirmationMessage = confirmationMessages[operationKey];
+        if (!confirmationMessage || !window.confirm(confirmationMessage)) {
+            return;
         }
 
         const paths = {
             "fbs:ship": `/api/fbs/reservations/${identifier}/ship`,
             "fbs:cancel": `/api/fbs/reservations/${identifier}/cancel`,
+            "fbs:deliver": `/api/fbs/reservations/${identifier}/deliver`,
             "fbo:ship": `/api/fbo/shipments/${identifier}/ship`,
             "fbo:receive": `/api/fbo/shipments/${identifier}/receive`,
         };
-        const path = paths[`${operation}:${action}`];
+        const path = paths[operationKey];
         if (!path) {
             return;
         }
@@ -507,6 +542,7 @@ if (operationsPage) {
         const loadingTexts = {
             ship: "Отправка...",
             cancel: "Отмена...",
+            deliver: "Подтверждение...",
             receive: "Приёмка...",
         };
         ui.setButtonLoading(button, true, loadingTexts[action]);
@@ -515,10 +551,11 @@ if (operationsPage) {
             const messages = {
                 "fbs:ship": `Резерв FBS #${identifier} отправлен`,
                 "fbs:cancel": `Резерв FBS #${identifier} отменён`,
+                "fbs:deliver": `Заказ FBS #${identifier} доставлен`,
                 "fbo:ship": `Поставка FBO #${identifier} отправлена`,
                 "fbo:receive": `Поставка FBO #${identifier} принята`,
             };
-            ui.showNotification(messages[`${operation}:${action}`], "success");
+            ui.showNotification(messages[operationKey], "success");
             await loadPageData();
         } catch (error) {
             ui.showNotification(error.message || "Не удалось выполнить операцию", "error");

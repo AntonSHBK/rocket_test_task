@@ -6,6 +6,7 @@ from app.schemas.fbs import FBSReservationCreate, FBSReservationResponse
 from app.service.fbs import (
     cancel_reservation,
     create_reservation,
+    deliver_reservation,
     list_reservations,
     ship_reservation,
 )
@@ -49,6 +50,17 @@ async def ship_fbs_reservation(
     session: AsyncSession = Depends(get_session),
 ) -> FBSReservationResponse:
     return await ship_reservation(
+        session=session,
+        reservation_id=reservation_id,
+    )
+
+
+@router.post("/{reservation_id}/deliver", response_model=FBSReservationResponse)
+async def deliver_fbs_reservation(
+    reservation_id: int,
+    session: AsyncSession = Depends(get_session),
+) -> FBSReservationResponse:
+    return await deliver_reservation(
         session=session,
         reservation_id=reservation_id,
     )

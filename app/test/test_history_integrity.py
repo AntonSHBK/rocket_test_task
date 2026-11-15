@@ -111,6 +111,7 @@ def test_all_stock_operation_types_are_registered() -> None:
         StockEventType.FBS_RESERVED,
         StockEventType.FBS_RESERVATION_CANCELLED,
         StockEventType.FBS_SHIPPED,
+        StockEventType.FBS_DELIVERED,
         StockEventType.TRANSFER_SHIPPED,
         StockEventType.TRANSFER_RECEIVED,
         StockEventType.FBO_SHIPPED,
@@ -128,7 +129,7 @@ def test_history_route_is_registered() -> None:
     assert ("/api/history", "GET") in routes
 
 
-def test_latest_alembic_revision_contains_write_off() -> None:
+def test_latest_alembic_revision_contains_fbs_delivery() -> None:
     script = ScriptDirectory.from_config(Config("alembic.ini"))
 
-    assert script.get_heads() == ["0003_write_off"]
+    assert script.get_heads() == ["0004_fbs_delivery"]

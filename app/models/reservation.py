@@ -50,6 +50,7 @@ class FBSReservation(TimestampMixin, Base):
     )
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     shipped_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     product: Mapped["Product"] = relationship(back_populates="reservations")
     warehouse: Mapped["Warehouse"] = relationship(back_populates="reservations")

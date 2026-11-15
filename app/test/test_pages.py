@@ -111,6 +111,7 @@ def test_inventory_script_supports_warehouse_selection_presets(
     response = client.get("/static/js/inventory.js")
 
     assert response.status_code == 200
+    assert 'let warehouseFilterMode = "active"' in response.text
     assert 'warehouseFilterMode = "all"' in response.text
     assert 'warehouseFilterMode = "active"' in response.text
     assert "selectedWarehouseIds" in response.text
@@ -126,6 +127,19 @@ def test_inventory_table_totals_use_selected_warehouses(
     assert "function calculateSelectedWarehouseTotals(item)" in response.text
     assert "selectedWarehouseIds.has(Number(stock.warehouse_id))" in response.text
     assert "appendStockMetrics(totalsCell, calculateSelectedWarehouseTotals(item))" in response.text
+
+
+def test_inventory_summary_uses_selected_warehouses(
+    client: TestClient,
+) -> None:
+    page_response = client.get("/")
+    script_response = client.get("/static/js/inventory.js")
+
+    assert page_response.status_code == 200
+    assert "Склады: актуальные" in page_response.text
+    assert script_response.status_code == 200
+    assert "const selectedTotals = calculateSelectedWarehouseTotals(item)" in script_response.text
+    assert "renderSummary(currentInventory);" in script_response.text
 
 
 def test_inventory_receipt_requires_confirmation(
@@ -326,3 +340,46 @@ def test_operations_history_displays_write_off_in_russian(
     assert 'WRITE_OFF: "Списание"' in script_response.text
     assert '"Основание"' not in script_response.text
     assert "history-reference" not in script_response.text
+
+
+def test_operations_supports_fbs_delivery_confirmation(
+    client: TestClient,
+) -> None:
+    page_response = client.get("/operations")
+    script_response = client.get("/static/js/operations.js")
+
+    assert page_response.status_code == 200
+    assert '<option value="FBS_DELIVERED">Доставка FBS</option>' in page_response.text
+    assert script_response.status_code == 200
+    assert 'FBS_DELIVERED: "Доставка FBS"' in script_response.text
+    assert 'DELIVERED: ["Доставлен"' in script_response.text
+    assert 'createActionButton("Подтвердить доставку", "fbs", "deliver"' in script_response.text
+    assert '"fbs:deliver": `/api/fbs/reservations/${identifier}/deliver`' in script_response.text
+    assert '["RESERVED", "SHIPPED"].includes(reservation.status)' in script_response.text
+    assert '["CANCELLED", "DELIVERED"].includes(reservation.status)' in script_response.text
+
+
+def test_operations_creation_requires_confirmation(
+    client: TestClient,
+) -> None:
+    response = client.get("/static/js/operations.js")
+
+    assert response.status_code == 200
+    assert "Создать резерв FBS?" in response.text
+    assert "Заказ: ${orderReference}" in response.text
+    assert "Создать поставку FBO?" in response.text
+    assert "Маркетплейс: ${destination}" in response.text
+
+
+def test_operations_status_transitions_require_confirmation(
+    client: TestClient,
+) -> None:
+    response = client.get("/static/js/operations.js")
+
+    assert response.status_code == 200
+    assert '"fbs:ship": `Отправить резерв FBS' in response.text
+    assert '"fbs:cancel": `Отменить резерв FBS' in response.text
+    assert '"fbs:deliver": `Подтвердить доставку заказа FBS' in response.text
+    assert '"fbo:ship": `Отправить поставку FBO' in response.text
+    assert '"fbo:receive": `Подтвердить приёмку поставки FBO' in response.text
+    assert "!window.confirm(confirmationMessage)" in response.text

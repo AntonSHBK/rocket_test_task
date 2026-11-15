@@ -33,7 +33,7 @@ if (inventoryPage) {
     let currentInventory = [];
     let inventoryWarehouses = [];
     let selectedWarehouseIds = new Set();
-    let warehouseFilterMode = "all";
+    let warehouseFilterMode = "active";
 
     function createReceiptKey() {
         const identifier = window.crypto?.randomUUID?.()
@@ -72,9 +72,10 @@ if (inventoryPage) {
     function calculateSummary(inventory) {
         return inventory.reduce(
             (summary, item) => {
-                summary.physical += item.totals.physical;
-                summary.reserved += item.totals.reserved;
-                summary.available += item.totals.available;
+                const selectedTotals = calculateSelectedWarehouseTotals(item);
+                summary.physical += selectedTotals.physical;
+                summary.reserved += selectedTotals.reserved;
+                summary.available += selectedTotals.available;
                 summary.betweenWarehouses += item.in_transit.between_warehouses;
                 summary.toMarketplace += item.in_transit.to_marketplace;
                 summary.toCustomer += item.in_transit.to_customer;
@@ -210,6 +211,7 @@ if (inventoryPage) {
     function applyWarehouseFilter() {
         updateWarehouseFilterMode();
         renderWarehouseFilter();
+        renderSummary(currentInventory);
         renderInventoryTable();
     }
 

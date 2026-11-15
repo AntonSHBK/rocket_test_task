@@ -27,6 +27,7 @@ from app.service.inventory import ensure_available_stock
 from app.utils.exceptions import (
     IdempotencyConflictError,
     InvalidReservationStateError,
+    InvalidShipmentStateError,
     ProductNotFoundError,
     ReservationNotFoundError,
     WarehouseInactiveError,
@@ -57,6 +58,7 @@ def build_reservation_response(
         shipment_id=shipment_id,
         cancelled_at=reservation.cancelled_at,
         shipped_at=reservation.shipped_at,
+        delivered_at=reservation.delivered_at,
         created_at=reservation.created_at,
     )
 
@@ -92,6 +94,35 @@ def mark_reservation_shipped(
 
     reservation.status = ReservationStatus.SHIPPED
     reservation.shipped_at = shipped_at or datetime.now(UTC)
+    return True
+
+
+def mark_reservation_delivered(
+    reservation: FBSReservation,
+    shipment: Shipment,
+    delivered_at: datetime | None = None,
+) -> bool:
+    if (
+        reservation.status == ReservationStatus.DELIVERED
+        and shipment.status == ShipmentStatus.RECEIVED
+    ):
+        return False
+    if reservation.status != ReservationStatus.SHIPPED:
+        raise InvalidReservationStateError(
+            current_status=reservation.status.value,
+            operation="deliver",
+        )
+    if shipment.status != ShipmentStatus.IN_TRANSIT:
+        raise InvalidShipmentStateError(
+            current_status=shipment.status.value,
+            expected_status=ShipmentStatus.IN_TRANSIT.value,
+        )
+
+    completed_at = delivered_at or datetime.now(UTC)
+    reservation.status = ReservationStatus.DELIVERED
+    reservation.delivered_at = completed_at
+    shipment.status = ShipmentStatus.RECEIVED
+    shipment.received_at = completed_at
     return True
 
 
@@ -489,6 +520,108 @@ async def ship_reservation(
     logger.info(
         "FBS shipment processed: reservation_id=%s shipment_id=%s sku=%s "
         "quantity=%s warehouse_id=%s warehouse=%s status=%s",
+        response.id,
+        response.shipment_id,
+        response.product.sku,
+        response.quantity,
+        response.warehouse.id,
+        response.warehouse.name,
+        response.status.value,
+    )
+    return response
+
+
+async def _deliver_reservation(
+    session: AsyncSession,
+    reservation_id: int,
+) -> tuple[FBSReservationResponse, bool]:
+    async with session.begin():
+        reservation = await session.scalar(
+            select(FBSReservation)
+            .where(FBSReservation.id == reservation_id)
+            .with_for_update()
+        )
+        if reservation is None:
+            raise ReservationNotFoundError(reservation_id)
+
+        product = await session.scalar(
+            select(Product).where(Product.id == reservation.product_id)
+        )
+        warehouse = await session.scalar(
+            select(Warehouse).where(Warehouse.id == reservation.warehouse_id)
+        )
+        if product is None:
+            raise ProductNotFoundError(str(reservation.product_id))
+        if warehouse is None:
+            raise WarehouseNotFoundError(reservation.warehouse_id)
+
+        if reservation.status not in {
+            ReservationStatus.SHIPPED,
+            ReservationStatus.DELIVERED,
+        }:
+            logger.warning(
+                "Invalid FBS delivery: reservation_id=%s sku=%s quantity=%s "
+                "warehouse_id=%s warehouse=%s status=%s",
+                reservation.id,
+                product.sku,
+                reservation.quantity,
+                warehouse.id,
+                warehouse.name,
+                reservation.status.value,
+            )
+            raise InvalidReservationStateError(
+                current_status=reservation.status.value,
+                operation="deliver",
+            )
+
+        shipment = await session.scalar(
+            select(Shipment)
+            .where(
+                Shipment.reservation_id == reservation.id,
+                Shipment.shipment_type == ShipmentType.FBS,
+            )
+            .with_for_update()
+        )
+        if shipment is None:
+            raise RuntimeError("FBS shipment was not found")
+
+        delivered = mark_reservation_delivered(reservation, shipment)
+        if delivered:
+            session.add(
+                StockEvent(
+                    event_type=StockEventType.FBS_DELIVERED,
+                    product_id=reservation.product_id,
+                    product_sku=product.sku,
+                    quantity=reservation.quantity,
+                    source_label="В пути к клиенту",
+                    destination_label=reservation.order_reference or "Клиент",
+                    reference_type="fbs_reservation",
+                    reference_id=reservation.id,
+                    idempotency_key=f"fbs:{reservation.id}:deliver",
+                )
+            )
+            await session.flush()
+
+        return (
+            build_reservation_response(
+                reservation,
+                product,
+                warehouse,
+                shipment_id=shipment.id,
+            ),
+            delivered,
+        )
+
+
+async def deliver_reservation(
+    session: AsyncSession,
+    reservation_id: int,
+) -> FBSReservationResponse:
+    response, delivered = await _deliver_reservation(session, reservation_id)
+    logger.info(
+        "FBS delivery %s: reservation_id=%s shipment_id=%s sku=%s quantity=%s "
+        "warehouse_id=%s warehouse=%s status=%s",
+        "completed" if delivered else "replayed",
         response.id,
         response.shipment_id,
         response.product.sku,

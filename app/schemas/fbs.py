@@ -31,4 +31,5 @@ class FBSReservationResponse(BaseModel):
     shipment_id: int | None
     cancelled_at: datetime | None
     shipped_at: datetime | None
+    delivered_at: datetime | None
     created_at: datetime
