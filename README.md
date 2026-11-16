@@ -10,6 +10,8 @@ Docker Compose.
 
 ![Демонстрация работы CheckStock](docs/demo.gif)
 
+[Подробное видео с описанием docs/video 2](docs/video%202.mp4) 
+
 ## Стек
 
 - Python 3.12
